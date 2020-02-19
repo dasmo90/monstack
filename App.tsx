@@ -12,7 +12,12 @@ import React from 'react';
 import {SafeAreaView, StatusBar} from 'react-native';
 import Main from './Main';
 
-const pokemons = ['Bisasam', 'Bisaknosp', 'Bisaflor', 'Glumanda', 'Glutexo'];
+const pokemons = [
+    'Bisasam',
+  'Bisaknosp',
+  'Bisaflor',
+  'Glumanda',
+  'Glutexo'];
 
 const App = () => {
   return (
