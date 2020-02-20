@@ -1,8 +1,8 @@
 import React, {ReactNode} from 'react';
 import {Platform, ScrollView, StyleSheet, Text, View} from 'react-native';
-import Search from './Search';
+import Search from './components/Search';
 import IDialog from './model/IDialog';
-import Dialog from './Dialog';
+import Dialog from './components/Dialog';
 
 interface IMainProps {
   data: string[];

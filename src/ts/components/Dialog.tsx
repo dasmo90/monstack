@@ -1,7 +1,7 @@
 import React, {ReactNode} from 'react';
 import {StyleSheet, Text, TouchableHighlight, View} from 'react-native';
-import IDialog from './model/IDialog';
-import select from './utils/Selector';
+import IDialog from '../model/IDialog';
+import select from '../utils/Selector';
 
 interface IDialogProps {
   dialog: IDialog;
