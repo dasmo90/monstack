@@ -22,6 +22,32 @@ export default class Main extends React.Component<IMainProps, IMainState> {
     };
   }
 
+  showDialog(text: string, yesAction: () => void): Promise<void> {
+    return new Promise((resolve: () => void, reject: () => void) => {
+      this.setState({
+        dialog: {
+          content: text,
+          options: [
+            {
+              text: 'Yes',
+              action: () => {
+                yesAction();
+                resolve();
+              },
+            },
+            {
+              text: 'No',
+              action: () => {
+                this.setState({dialog: null});
+                reject();
+              },
+            },
+          ],
+        },
+      });
+    });
+  }
+
   render(): ReactNode {
     const {data} = this.props;
     const {list, dialog} = this.state;
@@ -36,37 +62,21 @@ export default class Main extends React.Component<IMainProps, IMainState> {
                   this.setState({list: list.concat(item)});
                   return Promise.resolve();
                 } else {
-                  return new Promise((resolve, reject) => {
-                    this.setState({
-                      dialog: {
-                        content: `Do you really want to add "${item}" to your stack?`,
-                        options: [
-                          {
-                            text: 'Yes',
-                            action: () => {
-                              this.setState({
-                                list: list.concat(item),
-                                dialog: null,
-                              });
-                              resolve();
-                            },
-                          },
-                          {
-                            text: 'No',
-                            action: () => {
-                              this.setState({dialog: null});
-                              reject();
-                            },
-                          },
-                        ],
-                      },
-                    });
-                  });
+                  return this.showDialog(
+                    `Do you really want to add "${item}" to your stack?`,
+                    () => {
+                      this.setState({
+                        list: list.concat(item),
+                        dialog: null,
+                      });
+                    },
+                  );
                 }
               }}
             />
           </View>
           <ScrollView
+            bounces={false}
             contentInsetAdjustmentBehavior="automatic"
             style={styles.list}>
             {list.length === 0 ? (

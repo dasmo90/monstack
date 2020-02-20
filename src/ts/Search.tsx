@@ -22,6 +22,8 @@ export default class Search extends React.Component<
   ISearchProps,
   ISearchState
 > {
+  private input: TextInput | null = null;
+
   constructor(props: ISearchProps) {
     super(props);
     this.state = {
@@ -36,6 +38,9 @@ export default class Search extends React.Component<
     return (
       <View>
         <TextInput
+          ref={input => {
+            this.input = input;
+          }}
           style={styles.input}
           onChangeText={text => this.setState({query: text, closed: false})}
           onSubmitEditing={() => {
@@ -44,7 +49,9 @@ export default class Search extends React.Component<
               .then(() => {
                 this.setState({query: '', closed: true});
               })
-              .catch(() => {});
+              .catch(() => {
+                this.input?.focus();
+              });
           }}
           value={query}
         />
