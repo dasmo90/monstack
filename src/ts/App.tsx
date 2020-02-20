@@ -9,7 +9,7 @@
  */
 
 import React from 'react';
-import {SafeAreaView, StatusBar} from 'react-native';
+import {Platform, SafeAreaView, StatusBar, StyleSheet} from 'react-native';
 import Main from './Main';
 
 const pokemons = [
@@ -23,11 +23,17 @@ const App = () => {
   return (
     <>
       <StatusBar barStyle="dark-content" />
-      <SafeAreaView>
+      <SafeAreaView style={styles.fullHeight}>
         <Main data={pokemons} />
       </SafeAreaView>
     </>
   );
 };
+
+const styles = StyleSheet.create({
+  fullHeight: {
+    height: '100%',
+  },
+});
 
 export default App;

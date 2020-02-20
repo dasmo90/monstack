@@ -10,7 +10,7 @@ import {
 
 interface ISearchProps {
   data: string[];
-  onSelected: (entry: string) => void;
+  onSelected: (entry: string) => Promise<void>;
 }
 
 interface ISearchState {
@@ -22,8 +22,8 @@ export default class Search extends React.Component<
   ISearchProps,
   ISearchState
 > {
-  constructor(params) {
-    super(params);
+  constructor(props: ISearchProps) {
+    super(props);
     this.state = {
       query: '',
       closed: true,
@@ -39,8 +39,12 @@ export default class Search extends React.Component<
           style={styles.input}
           onChangeText={text => this.setState({query: text, closed: false})}
           onSubmitEditing={() => {
-            this.props.onSelected(query.trim());
-            this.setState({query: '', closed: true});
+            this.props
+              .onSelected(query.trim())
+              .then(() => {
+                this.setState({query: '', closed: true});
+              })
+              .catch(() => {});
           }}
           value={query}
         />
