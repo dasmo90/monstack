@@ -9,15 +9,19 @@
  */
 
 import React from 'react';
-import {Platform, SafeAreaView, StatusBar, StyleSheet} from 'react-native';
+import {SafeAreaView, StatusBar, StyleSheet, Text} from 'react-native';
 import Main from './Main';
 
 const pokemons = [
-    'Bisasam',
+  'Bisasam',
   'Bisaknosp',
   'Bisaflor',
   'Glumanda',
-  'Glutexo'];
+  'Glutexo',
+  'Glurak',
+  'Schiggy',
+  'Schillok',
+];
 
 const App = () => {
   return (

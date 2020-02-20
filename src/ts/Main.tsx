@@ -1,5 +1,6 @@
 import React, {ReactNode} from 'react';
 import {Platform, ScrollView, StyleSheet, Text, View} from 'react-native';
+import AsyncStorage from '@react-native-community/async-storage';
 import Search from './components/Search';
 import IDialog from './model/IDialog';
 import Dialog from './components/Dialog';
@@ -10,6 +11,7 @@ interface IMainProps {
 
 interface IMainState {
   list: string[];
+  suggestions: string[];
   dialog: IDialog | null;
 }
 
@@ -18,28 +20,50 @@ export default class Main extends React.Component<IMainProps, IMainState> {
     super(props);
     this.state = {
       list: [],
+      suggestions: [],
       dialog: null,
     };
   }
 
-  showDialog(text: string, yesAction: () => void): Promise<void> {
+  componentDidMount(): void {
+    AsyncStorage.getItem('userSuggestions').then(value => {
+      this.setState({suggestions: JSON.parse(value || '[]')});
+    });
+  }
+
+  private addSuggestion(item: string): Promise<string[]> {
+    const {suggestions} = this.state;
+    if (suggestions.map(s => s.toLowerCase()).indexOf(item.toLowerCase()) < 0) {
+      let newSuggestions = suggestions.concat(item);
+      return AsyncStorage.setItem(
+        'userSuggestions',
+        JSON.stringify(newSuggestions),
+      ).then(() => {
+        return newSuggestions;
+      });
+    } else {
+      return Promise.resolve(suggestions);
+    }
+  }
+
+  private showDialog(text: string, yesAction: () => void): Promise<void> {
     return new Promise((resolve: () => void, reject: () => void) => {
       this.setState({
         dialog: {
           content: text,
           options: [
             {
-              text: 'Yes',
-              action: () => {
-                yesAction();
-                resolve();
-              },
-            },
-            {
               text: 'No',
               action: () => {
                 this.setState({dialog: null});
                 reject();
+              },
+            },
+            {
+              text: 'Yes',
+              action: () => {
+                yesAction();
+                resolve();
               },
             },
           ],
@@ -50,24 +74,28 @@ export default class Main extends React.Component<IMainProps, IMainState> {
 
   render(): ReactNode {
     const {data} = this.props;
-    const {list, dialog} = this.state;
+    const {list, dialog, suggestions} = this.state;
+    const all = data.concat(suggestions);
     return (
       <View style={styles.fullHeight}>
         <View style={styles.body}>
           <View style={styles.searchContainer}>
             <Search
-              data={data}
+              data={all}
               onSelected={item => {
-                if (data.indexOf(item) >= 0) {
+                if (all.indexOf(item) >= 0) {
                   this.setState({list: list.concat(item)});
                   return Promise.resolve();
                 } else {
                   return this.showDialog(
                     `Do you really want to add "${item}" to your stack?`,
                     () => {
-                      this.setState({
-                        list: list.concat(item),
-                        dialog: null,
+                      this.addSuggestion(item).then(suggestionList => {
+                        this.setState({
+                          list: list.concat(item),
+                          suggestions: suggestionList,
+                          dialog: null,
+                        });
                       });
                     },
                   );
@@ -92,7 +120,7 @@ export default class Main extends React.Component<IMainProps, IMainState> {
                     </Text>
                   );
                 })
-                .concat(<View style={styles.line} />)
+                .concat(<View key={'listLast'} style={styles.line} />)
             )}
           </ScrollView>
         </View>

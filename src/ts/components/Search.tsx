@@ -44,14 +44,18 @@ export default class Search extends React.Component<
           style={styles.input}
           onChangeText={text => this.setState({query: text, closed: false})}
           onSubmitEditing={() => {
-            this.props
-              .onSelected(query.trim())
-              .then(() => {
-                this.setState({query: '', closed: true});
-              })
-              .catch(() => {
-                this.input?.focus();
-              });
+            const item = query.trim();
+            if (item) {
+              console.log('item', item);
+              this.props
+                .onSelected(item)
+                .then(() => {
+                  this.setState({query: '', closed: true});
+                })
+                .catch(() => {
+                  this.input?.focus();
+                });
+            }
           }}
           value={query}
         />
@@ -87,7 +91,7 @@ const styles = StyleSheet.create({
   input: {
     paddingVertical: 12,
     paddingHorizontal: 8,
-    borderColor: 'gray',
+    borderColor: 'lightgray',
     borderWidth: 1,
   },
   list: {
@@ -103,7 +107,7 @@ const styles = StyleSheet.create({
   },
   item: {
     backgroundColor: '#efefef',
-    borderColor: 'gray',
+    borderColor: 'lightgray',
     borderWidth: 1,
     paddingVertical: 12,
     paddingHorizontal: 8,
