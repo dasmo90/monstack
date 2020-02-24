@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-community/async-storage';
 import Search from './components/Search';
 import IDialog from './model/IDialog';
 import Dialog from './components/Dialog';
+import Swipeable from './components/Swipeable';
 
 interface IMainProps {
   data: string[];
@@ -13,6 +14,7 @@ interface IMainState {
   list: string[];
   suggestions: string[];
   dialog: IDialog | null;
+  test: number;
 }
 
 export default class Main extends React.Component<IMainProps, IMainState> {
@@ -22,6 +24,7 @@ export default class Main extends React.Component<IMainProps, IMainState> {
       list: [],
       suggestions: [],
       dialog: null,
+      test: 0,
     };
   }
 
@@ -115,9 +118,11 @@ export default class Main extends React.Component<IMainProps, IMainState> {
                   let style =
                     index % 2 === 0 ? styles.itemOdd : styles.itemEven;
                   return (
-                    <Text key={'list-' + index} style={[styles.item, style]}>
-                      {entry}
-                    </Text>
+                    <Swipeable
+                      key={'list-' + index}
+                      style={[styles.item, style]}>
+                      <Text>{entry}</Text>
+                    </Swipeable>
                   );
                 })
                 .concat(<View key={'listLast'} style={styles.line} />)
