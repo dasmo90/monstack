@@ -9,7 +9,7 @@
  */
 
 import React from 'react';
-import {SafeAreaView, StatusBar, StyleSheet, Text} from 'react-native';
+import {SafeAreaView, StatusBar, StyleSheet} from 'react-native';
 import Main from './Main';
 
 const pokemons = [
@@ -21,6 +21,8 @@ const pokemons = [
   'Glurak',
   'Schiggy',
   'Schillok',
+  'Turtok',
+  'Pikatchu',
 ];
 
 const App = () => {

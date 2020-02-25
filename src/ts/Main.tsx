@@ -1,17 +1,25 @@
 import React, {ReactNode} from 'react';
-import {Platform, ScrollView, StyleSheet, Text, View} from 'react-native';
+import {
+  LayoutAnimation,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import AsyncStorage from '@react-native-community/async-storage';
 import Search from './components/Search';
 import IDialog from './model/IDialog';
 import Dialog from './components/Dialog';
 import Swipeable from './components/Swipeable';
+import {Fadeable} from './components/Fadeable';
 
 interface IMainProps {
   data: string[];
 }
 
 interface IMainState {
-  list: string[];
+  list: {label: string; id: number}[];
   suggestions: string[];
   dialog: IDialog | null;
   test: number;
@@ -75,6 +83,15 @@ export default class Main extends React.Component<IMainProps, IMainState> {
     });
   }
 
+  private addElement<K extends keyof IMainState>(
+    item: string,
+    state?: Pick<IMainState, K>,
+  ) {
+    const {list} = this.state;
+    list.unshift({label: item, id: new Date().getTime()});
+    this.setState(state || ({} as Pick<IMainState, K>));
+  }
+
   render(): ReactNode {
     const {data} = this.props;
     const {list, dialog, suggestions} = this.state;
@@ -87,15 +104,14 @@ export default class Main extends React.Component<IMainProps, IMainState> {
               data={all}
               onSelected={item => {
                 if (all.indexOf(item) >= 0) {
-                  this.setState({list: list.concat(item)});
+                  this.addElement(item);
                   return Promise.resolve();
                 } else {
                   return this.showDialog(
                     `Do you really want to add "${item}" to your stack?`,
                     () => {
                       this.addSuggestion(item).then(suggestionList => {
-                        this.setState({
-                          list: list.concat(item),
+                        this.addElement(item, {
                           suggestions: suggestionList,
                           dialog: null,
                         });
@@ -113,19 +129,31 @@ export default class Main extends React.Component<IMainProps, IMainState> {
             {list.length === 0 ? (
               <Text style={styles.empty}>Your stack is empty.</Text>
             ) : (
-              list
-                .map((entry, index) => {
-                  let style =
-                    index % 2 === 0 ? styles.itemOdd : styles.itemEven;
-                  return (
-                    <Swipeable
-                      key={'list-' + index}
-                      style={[styles.item, style]}>
-                      <Text>{entry}</Text>
-                    </Swipeable>
-                  );
-                })
-                .concat(<View key={'listLast'} style={styles.line} />)
+              list.map((entry, index) => {
+                const style =
+                  index % 2 === 0 ? styles.itemOdd : styles.itemEven;
+                const view = (
+                  <View style={[styles.item, style]}>
+                    <Text>{entry.label}</Text>
+                  </View>
+                );
+                return (
+                  <Swipeable
+                    key={entry.id}
+                    onSwipedLeft={() => {
+                      this.addElement(entry.label);
+                    }}
+                    onSwipedRight={() => {
+                      list.splice(index, 1);
+                      LayoutAnimation.configureNext(
+                        LayoutAnimation.Presets.easeInEaseOut,
+                      );
+                      this.setState({list: list});
+                    }}>
+                    {index === 0 ? <Fadeable>{view}</Fadeable> : view}
+                  </Swipeable>
+                );
+              })
             )}
           </ScrollView>
         </View>
