@@ -1,5 +1,12 @@
 import React, {ReactNode} from 'react';
-import {Animated, LayoutRectangle, StyleSheet, View} from 'react-native';
+import {
+  Animated,
+  LayoutRectangle,
+  Platform,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 interface ISwipeableProps {
   onSwipedRight: () => void;
@@ -7,7 +14,7 @@ interface ISwipeableProps {
 }
 
 interface ISwipeableState {
-  direction: 'RIGHT' | 'LEFT';
+  direction: 'RIGHT' | 'LEFT' | 'NONE';
   x: Animated.Value;
 }
 
@@ -21,7 +28,7 @@ export default class Swipeable extends React.Component<
   constructor(props: ISwipeableProps) {
     super(props);
     this.state = {
-      direction: 'LEFT',
+      direction: 'NONE',
       x: new Animated.Value(0),
     };
   }
@@ -29,7 +36,12 @@ export default class Swipeable extends React.Component<
   render(): ReactNode {
     const {children} = this.props;
     const {x, direction} = this.state;
-    let backgroundColor = direction === 'RIGHT' ? '#FFC0CB' : '#98FB98';
+    let backgroundColor =
+      direction === 'NONE'
+        ? 'white'
+        : direction === 'RIGHT'
+        ? '#FFC0CB'
+        : '#98FB98';
     return (
       <View
         onLayout={event => {
@@ -70,6 +82,7 @@ export default class Swipeable extends React.Component<
                 this.setState(
                   {
                     x: new Animated.Value(0),
+                    direction: 'NONE',
                   },
                   this.props.onSwipedRight,
                 );
@@ -82,6 +95,7 @@ export default class Swipeable extends React.Component<
                 this.setState(
                   {
                     x: new Animated.Value(0),
+                    direction: 'NONE',
                   },
                   this.props.onSwipedLeft,
                 );
@@ -89,8 +103,12 @@ export default class Swipeable extends React.Component<
             } else {
               Animated.timing(this.state.x, {
                 toValue: 0,
-                duration: 100,
-              }).start();
+                duration: 250,
+              }).start(() => {
+                this.setState({
+                  direction: 'NONE',
+                });
+              });
             }
           }}
         />
@@ -106,6 +124,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
+    opacity: 0,
   },
   watermark: {
     opacity: 0.5,

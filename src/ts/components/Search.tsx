@@ -1,15 +1,19 @@
 import React, {ReactNode} from 'react';
 import {
   Platform,
+  StyleProp,
   StyleSheet,
   Text,
   TextInput,
   TouchableHighlight,
   View,
+  ViewStyle,
 } from 'react-native';
 
 interface ISearchProps {
   data: string[];
+  style?: StyleProp<ViewStyle>;
+  inputStyle?: StyleProp<ViewStyle>;
   onSelected: (entry: string) => Promise<void>;
 }
 
@@ -33,20 +37,20 @@ export default class Search extends React.Component<
   }
 
   render(): ReactNode {
+    const {children, style, inputStyle} = this.props;
     const {query, closed} = this.state;
-    const data = this._filterData(query);
+    const data = this.filterData(query);
     return (
-      <View>
+      <>
         <TextInput
           ref={input => {
             this.input = input;
           }}
-          style={styles.input}
+          style={inputStyle || styles.input}
           onChangeText={text => this.setState({query: text, closed: false})}
           onSubmitEditing={() => {
             const item = query.trim();
             if (item) {
-              console.log('item', item);
               this.props
                 .onSelected(item)
                 .then(() => {
@@ -59,8 +63,9 @@ export default class Search extends React.Component<
           }}
           value={query}
         />
-        {closed ? null : (
-          <View>
+        <View style={style}>
+          {children}
+          {closed ? null : (
             <View style={styles.list}>
               {data.map((entry, index) => (
                 <TouchableHighlight
@@ -70,13 +75,13 @@ export default class Search extends React.Component<
                 </TouchableHighlight>
               ))}
             </View>
-          </View>
-        )}
-      </View>
+          )}
+        </View>
+      </>
     );
   }
 
-  private _filterData(query: string): string[] {
+  private filterData(query: string): string[] {
     if (query) {
       return this.props.data
         .filter(e => e.toLowerCase().startsWith(query.toLowerCase()))
@@ -99,11 +104,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: '100%',
     top: 0,
-    ...Platform.select({
-      android: {
-        elevation: 1,
-      },
-    }),
   },
   item: {
     backgroundColor: '#efefef',
