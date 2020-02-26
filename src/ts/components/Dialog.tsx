@@ -28,7 +28,11 @@ export default class Dialog extends React.Component<IDialogProps, {}> {
             </TouchableHighlight>
           </View>
           <View style={styles.dialogContent}>
-            <Text>{dialog.content}</Text>
+            {dialog.content ? (
+              <Text>{dialog.content}</Text>
+            ) : (
+              dialog.reactContent
+            )}
           </View>
           <View style={styles.dialogBottomSpace} />
           <View style={styles.dialogBottom}>

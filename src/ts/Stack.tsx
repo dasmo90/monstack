@@ -8,21 +8,20 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-community/async-storage';
 import Search from './components/Search';
-import IDialog from './model/IDialog';
-import Dialog from './components/Dialog';
 import Swipeable from './components/Swipeable';
 import {Fadeable} from './components/Fadeable';
 import {RouteProp} from '@react-navigation/core/src/types';
 import {ALL} from './data/Pokemon';
+import {hideDialog, showDialog} from './App';
+import ILabel from './model/ILabel';
 
 interface IStackProps {
-  route: RouteProp<Record<string, {id: string}>, 'Stack'>;
+  route: RouteProp<Record<string, ILabel>, 'Stack'>;
 }
 
 interface IStackState {
   list: {label: string; id: number}[];
   suggestions: string[];
-  dialog: IDialog | null;
 }
 
 export default class Stack extends React.Component<IStackProps, IStackState> {
@@ -31,7 +30,6 @@ export default class Stack extends React.Component<IStackProps, IStackState> {
     this.state = {
       list: [],
       suggestions: [],
-      dialog: null,
     };
   }
 
@@ -65,26 +63,25 @@ export default class Stack extends React.Component<IStackProps, IStackState> {
 
   private showDialog(text: string, yesAction: () => void): Promise<void> {
     return new Promise((resolve: () => void, reject: () => void) => {
-      this.setState({
-        dialog: {
-          content: text,
-          options: [
-            {
-              text: 'No',
-              action: () => {
-                this.setState({dialog: null});
-                reject();
-              },
+      showDialog({
+        content: text,
+        options: [
+          {
+            text: 'No',
+            action: () => {
+              hideDialog();
+              reject();
             },
-            {
-              text: 'Yes',
-              action: () => {
-                yesAction();
-                resolve();
-              },
+          },
+          {
+            text: 'Yes',
+            action: () => {
+              yesAction();
+              hideDialog();
+              resolve();
             },
-          ],
-        },
+          },
+        ],
       });
     });
   }
@@ -123,7 +120,7 @@ export default class Stack extends React.Component<IStackProps, IStackState> {
   }
 
   render(): ReactNode {
-    const {list, dialog, suggestions} = this.state;
+    const {list, suggestions} = this.state;
     const all = ALL.concat(suggestions);
     return (
       <View style={styles.main}>
@@ -145,7 +142,6 @@ export default class Stack extends React.Component<IStackProps, IStackState> {
                       this.setState({
                         list: stackList,
                         suggestions: suggestionList,
-                        dialog: null,
                       }),
                     );
                   });
@@ -200,19 +196,13 @@ export default class Stack extends React.Component<IStackProps, IStackState> {
                   () => {},
                 )
                   .then(() => this.clear())
-                  .then(() => this.setState({list: [], dialog: null}))
+                  .then(() => this.setState({list: []}))
                   .catch(() => {});
               }}>
               Clear stack
             </Text>
           </View>
         </Search>
-        {dialog ? (
-          <Dialog
-            dialog={dialog}
-            onClose={() => this.setState({dialog: null})}
-          />
-        ) : null}
       </View>
     );
   }
