@@ -40,8 +40,8 @@ export default class Swipeable extends React.Component<
       direction === 'NONE'
         ? 'white'
         : direction === 'RIGHT'
-        ? '#FFC0CB'
-        : '#98FB98';
+        ? '#98FB98'
+        : '#FFC0CB';
     return (
       <View
         onLayout={event => {

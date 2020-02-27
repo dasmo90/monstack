@@ -43,6 +43,8 @@ export default class Search extends React.Component<
     return (
       <>
         <TextInput
+          placeholder={'Type here to add mons'}
+          placeholderTextColor={'lightgray'}
           ref={input => {
             this.input = input;
           }}
@@ -97,7 +99,7 @@ export default class Search extends React.Component<
     if (query) {
       return this.props.data
         .filter(e => e.toLowerCase().startsWith(query.toLowerCase()))
-        .slice(0, 5);
+        .slice(0, 7);
     } else {
       return [];
     }
@@ -110,6 +112,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     borderColor: 'lightgray',
     borderWidth: 1,
+    color: 'gray',
   },
   list: {
     backgroundColor: 'white',

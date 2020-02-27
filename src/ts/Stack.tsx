@@ -2,9 +2,9 @@ import React, {ReactNode} from 'react';
 import {
   FlatList,
   LayoutAnimation,
-  ScrollView,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from 'react-native';
 import AsyncStorage from '@react-native-community/async-storage';
@@ -21,7 +21,7 @@ interface IStackProps {
 }
 
 interface IStackState {
-  list: {label: string; id: number}[];
+  list: ILabel[];
   suggestions: string[];
   loading: boolean;
   increased: boolean;
@@ -93,23 +93,21 @@ export default class Stack extends React.Component<IStackProps, IStackState> {
 
   private addElement<K extends keyof IStackState>(
     item: string,
-  ): Promise<{label: string; id: number}[]> {
+  ): Promise<ILabel[]> {
     const {list} = this.state;
-    list.unshift({label: item, id: new Date().getTime()});
+    list.unshift({label: item, id: `${new Date().getTime()}`});
     return this.storeList();
   }
 
   private removeElement<K extends keyof IStackState>(
     index: number,
-  ): Promise<{label: string; id: number}[]> {
+  ): Promise<ILabel[]> {
     const {list} = this.state;
     list.splice(index, 1);
     return this.storeList();
   }
 
-  private clear<K extends keyof IStackState>(): Promise<
-    {label: string; id: number}[]
-  > {
+  private clear<K extends keyof IStackState>(): Promise<ILabel[]> {
     const {list} = this.state;
     list.length = 0;
     return this.storeList();
@@ -169,12 +167,12 @@ export default class Stack extends React.Component<IStackProps, IStackState> {
                   const view = (
                     <Swipeable
                       key={item.id}
-                      onSwipedLeft={() => {
+                      onSwipedRight={() => {
                         this.addElement(item.label).then(stackList =>
                           this.setState({list: stackList, increased: true}),
                         );
                       }}
-                      onSwipedRight={() => {
+                      onSwipedLeft={() => {
                         this.removeElement(index).then(stackList => {
                           LayoutAnimation.configureNext(
                             LayoutAnimation.Presets.easeInEaseOut,
@@ -183,7 +181,10 @@ export default class Stack extends React.Component<IStackProps, IStackState> {
                         });
                       }}>
                       <View style={styles.item}>
-                        <Text>{(index + 1)}. {item.label}</Text>
+                        <Text style={styles.itemNumber}>
+                          {list.length - index}.
+                        </Text>
+                        <Text>{item.label}</Text>
                       </View>
                       <View style={styles.itemSeparator} />
                     </Swipeable>
@@ -197,20 +198,19 @@ export default class Stack extends React.Component<IStackProps, IStackState> {
               />
             )}
           </View>
-          <View style={styles.footer}>
-            <Text
-              onPress={() => {
-                this.showDialog(
-                  'Do you really want to clear your stack?',
-                  () => {},
-                )
-                  .then(() => this.clear())
-                  .then(() => this.setState({list: [], increased: false}))
-                  .catch(() => {});
-              }}>
-              Clear stack
-            </Text>
-          </View>
+          <TouchableOpacity
+            style={styles.footer}
+            onPress={() => {
+              this.showDialog(
+                'Do you really want to clear your stack?',
+                () => {},
+              )
+                .then(() => this.clear())
+                .then(() => this.setState({list: [], increased: false}))
+                .catch(() => {});
+            }}>
+            <Text>Clear stack</Text>
+          </TouchableOpacity>
         </Search>
       </View>
     );
@@ -222,6 +222,7 @@ const styles = StyleSheet.create({
     height: '100%',
     display: 'flex',
     flexDirection: 'column',
+    paddingHorizontal: 5,
   },
   body: {
     display: 'flex',
@@ -229,19 +230,26 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   input: {
+    marginTop: 5,
     paddingVertical: 12,
     paddingHorizontal: 8,
     backgroundColor: 'white',
+    color: 'gray',
   },
   list: {
     marginTop: 5,
     flex: 1,
   },
   footer: {
-    flexBasis: 15,
-    marginVertical: 15,
+    marginTop: 5,
+    backgroundColor: 'white',
+    marginHorizontal: -15,
+    flexBasis: 45,
+    paddingVertical: 15,
     display: 'flex',
     alignItems: 'center',
+    borderTopWidth: 0.5,
+    borderTopColor: 'lightgray',
   },
   empty: {
     paddingHorizontal: 8,
@@ -254,6 +262,13 @@ const styles = StyleSheet.create({
   item: {
     padding: 12,
     backgroundColor: 'white',
+    display: 'flex',
+    flexDirection: 'row',
+  },
+  itemNumber: {
+    marginRight: 10,
+    width: 25,
+    textAlign: 'right',
   },
   itemSeparator: {
     height: 1,

@@ -210,6 +210,7 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   addInput: {
+    color: 'gray',
     marginTop: 5,
     paddingVertical: 3,
   },
