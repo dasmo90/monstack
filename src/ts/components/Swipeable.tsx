@@ -1,10 +1,11 @@
 import React, {ReactNode} from 'react';
 import {
   Animated,
+  GestureResponderEvent,
   LayoutRectangle,
-  Platform,
+  PanResponder,
+  PanResponderInstance,
   StyleSheet,
-  TouchableOpacity,
   View,
 } from 'react-native';
 
@@ -24,6 +25,7 @@ export default class Swipeable extends React.Component<
 > {
   private layout: LayoutRectangle = {x: 0, y: 0, height: 0, width: 0};
   private startX = 0;
+  private panResponder: PanResponderInstance;
 
   constructor(props: ISwipeableProps) {
     super(props);
@@ -31,7 +33,70 @@ export default class Swipeable extends React.Component<
       direction: 'NONE',
       x: new Animated.Value(0),
     };
+    this.panResponder = PanResponder.create({
+      onMoveShouldSetPanResponder: (event, gesture) => {
+        if (Math.abs(gesture.dx) > Math.abs(gesture.dy)) {
+          this.startX = event.nativeEvent.locationX;
+          this.setState({
+            x: new Animated.Value(0),
+          });
+          return true;
+        }
+        return false;
+      },
+      onPanResponderMove: this.touchMove,
+      onPanResponderEnd: this.touchEnd,
+      onPanResponderTerminate: this.touchEnd,
+    });
   }
+
+  private touchMove: (event: GestureResponderEvent) => void = event => {
+    let distance = event.nativeEvent.locationX - this.startX;
+    this.setState({
+      direction: distance > 0 ? 'RIGHT' : 'LEFT',
+      x: new Animated.Value(distance),
+    });
+  };
+
+  private touchEnd: (event: GestureResponderEvent) => void = event => {
+    const distance = event.nativeEvent.locationX - this.startX;
+    if (distance > this.layout.width / 3) {
+      Animated.timing(this.state.x, {
+        toValue: this.layout.width,
+        duration: 250,
+      }).start(() => {
+        this.setState(
+          {
+            x: new Animated.Value(0),
+            direction: 'NONE',
+          },
+          this.props.onSwipedRight,
+        );
+      });
+    } else if (distance < -this.layout.width / 3) {
+      Animated.timing(this.state.x, {
+        toValue: -this.layout.width,
+        duration: 250,
+      }).start(() => {
+        this.setState(
+          {
+            x: new Animated.Value(0),
+            direction: 'NONE',
+          },
+          this.props.onSwipedLeft,
+        );
+      });
+    } else {
+      Animated.timing(this.state.x, {
+        toValue: 0,
+        duration: 250,
+      }).start(() => {
+        this.setState({
+          direction: 'NONE',
+        });
+      });
+    }
+  };
 
   render(): ReactNode {
     const {children} = this.props;
@@ -57,61 +122,7 @@ export default class Swipeable extends React.Component<
           {children}
         </Animated.View>
         <View style={[styles.touchable, styles.watermark]}>{children}</View>
-        <View
-          style={styles.touchable}
-          onTouchStart={event => {
-            this.startX = event.nativeEvent.locationX;
-            this.setState({
-              x: new Animated.Value(0),
-            });
-          }}
-          onTouchMove={event => {
-            let distance = event.nativeEvent.locationX - this.startX;
-            this.setState({
-              direction: distance > 0 ? 'RIGHT' : 'LEFT',
-              x: new Animated.Value(distance),
-            });
-          }}
-          onTouchEnd={event => {
-            const distance = event.nativeEvent.locationX - this.startX;
-            if (distance > this.layout.width / 4) {
-              Animated.timing(this.state.x, {
-                toValue: this.layout.width,
-                duration: 250,
-              }).start(() => {
-                this.setState(
-                  {
-                    x: new Animated.Value(0),
-                    direction: 'NONE',
-                  },
-                  this.props.onSwipedRight,
-                );
-              });
-            } else if (distance < -this.layout.width / 4) {
-              Animated.timing(this.state.x, {
-                toValue: -this.layout.width,
-                duration: 250,
-              }).start(() => {
-                this.setState(
-                  {
-                    x: new Animated.Value(0),
-                    direction: 'NONE',
-                  },
-                  this.props.onSwipedLeft,
-                );
-              });
-            } else {
-              Animated.timing(this.state.x, {
-                toValue: 0,
-                duration: 250,
-              }).start(() => {
-                this.setState({
-                  direction: 'NONE',
-                });
-              });
-            }
-          }}
-        />
+        <View style={styles.touchable} {...this.panResponder.panHandlers} />
       </View>
     );
   }

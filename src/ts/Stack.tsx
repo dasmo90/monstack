@@ -2,6 +2,7 @@ import React, {ReactNode} from 'react';
 import {
   FlatList,
   LayoutAnimation,
+  ListRenderItem,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -28,6 +29,32 @@ interface IStackState {
 }
 
 export default class Stack extends React.Component<IStackProps, IStackState> {
+  private listRenderItem: ListRenderItem<ILabel> = ({item, index}) => {
+    const {list, increased} = this.state;
+    const view = (
+      <Swipeable
+        onSwipedRight={() => {
+          this.addElement(item.label).then(stackList =>
+            this.setState({list: stackList, increased: true}),
+          );
+        }}
+        onSwipedLeft={() => {
+          this.removeElement(index).then(stackList => {
+            LayoutAnimation.configureNext(
+              LayoutAnimation.Presets.easeInEaseOut,
+            );
+            this.setState({list: stackList, increased: false});
+          });
+        }}>
+        <View style={styles.item}>
+          <Text style={styles.itemNumber}>{list.length - index}.</Text>
+          <Text>{item.label}</Text>
+        </View>
+        <View style={styles.itemSeparator} />
+      </Swipeable>
+    );
+    return index === 0 && increased ? <Fadeable>{view}</Fadeable> : view;
+  };
   constructor(props: IStackProps) {
     super(props);
     this.state = {
@@ -123,7 +150,7 @@ export default class Stack extends React.Component<IStackProps, IStackState> {
   }
 
   render(): ReactNode {
-    const {list, increased, loading, suggestions} = this.state;
+    const {list, loading, suggestions} = this.state;
     const all = ALL.concat(suggestions);
     return (
       <View style={styles.main}>
@@ -162,39 +189,11 @@ export default class Stack extends React.Component<IStackProps, IStackState> {
             ) : (
               <FlatList
                 data={list}
-                initialNumToRender={20}
-                renderItem={({item, index}) => {
-                  const view = (
-                    <Swipeable
-                      key={item.id}
-                      onSwipedRight={() => {
-                        this.addElement(item.label).then(stackList =>
-                          this.setState({list: stackList, increased: true}),
-                        );
-                      }}
-                      onSwipedLeft={() => {
-                        this.removeElement(index).then(stackList => {
-                          LayoutAnimation.configureNext(
-                            LayoutAnimation.Presets.easeInEaseOut,
-                          );
-                          this.setState({list: stackList, increased: false});
-                        });
-                      }}>
-                      <View style={styles.item}>
-                        <Text style={styles.itemNumber}>
-                          {list.length - index}.
-                        </Text>
-                        <Text>{item.label}</Text>
-                      </View>
-                      <View style={styles.itemSeparator} />
-                    </Swipeable>
-                  );
-                  return index === 0 && increased ? (
-                    <Fadeable key={item.id}>{view}</Fadeable>
-                  ) : (
-                    view
-                  );
-                }}
+                bounces={false}
+                removeClippedSubviews={false}
+                initialNumToRender={15}
+                keyExtractor={item => item.id}
+                renderItem={this.listRenderItem}
               />
             )}
           </View>
