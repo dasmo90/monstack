@@ -15,7 +15,8 @@ import {NavigationContainer} from '@react-navigation/native';
 import Main from './Main';
 import Dialog from './components/Dialog';
 import IDialog from './model/IDialog';
-import ILabel from "./model/ILabel";
+import ILabel from './model/ILabel';
+import {StatusBar} from 'react-native';
 
 const NavigatorStack = createStackNavigator();
 
@@ -34,10 +35,12 @@ export default class App extends React.Component<{}, IAppState> {
     // eslint-disable-next-line consistent-this
     app = this;
   }
+
   render() {
     const {dialog} = this.state;
     return (
       <NavigationContainer>
+        <StatusBar barStyle="dark-content" />
         <NavigatorStack.Navigator>
           <NavigatorStack.Screen name="Home" options={{title: 'Accounts'}}>
             {props => <Main {...props} />}
