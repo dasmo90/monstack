@@ -38,14 +38,18 @@ export default class Stack extends React.Component<IStackProps, IStackState> {
             this.setState({list: stackList, increased: true}),
           );
         }}
-        onSwipedLeft={() => {
-          this.removeElement(index).then(stackList => {
-            LayoutAnimation.configureNext(
-              LayoutAnimation.Presets.easeInEaseOut,
-            );
-            this.setState({list: stackList, increased: false});
-          });
-        }}>
+        onSwipedLeft={
+          index === 0 || index === list.length - 1
+            ? () => {
+                this.removeElement(index).then(stackList => {
+                  LayoutAnimation.configureNext(
+                    LayoutAnimation.Presets.easeInEaseOut,
+                  );
+                  this.setState({list: stackList, increased: false});
+                });
+              }
+            : undefined
+        }>
         <View style={styles.item}>
           <Text style={styles.itemNumber}>{list.length - index}.</Text>
           <Text>{item.label}</Text>

@@ -10,8 +10,8 @@ import {
 } from 'react-native';
 
 interface ISwipeableProps {
-  onSwipedRight: () => void;
-  onSwipedLeft: () => void;
+  onSwipedRight?: () => void;
+  onSwipedLeft?: () => void;
 }
 
 interface ISwipeableState {
@@ -52,15 +52,21 @@ export default class Swipeable extends React.Component<
 
   private touchMove: (event: GestureResponderEvent) => void = event => {
     let distance = event.nativeEvent.locationX - this.startX;
+    const direction =
+      distance > 0 && this.props.onSwipedRight
+        ? 'RIGHT'
+        : distance < 0 && this.props.onSwipedLeft
+        ? 'LEFT'
+        : 'NONE';
     this.setState({
-      direction: distance > 0 ? 'RIGHT' : 'LEFT',
+      direction: direction,
       x: new Animated.Value(distance),
     });
   };
 
   private touchEnd: (event: GestureResponderEvent) => void = event => {
     const distance = event.nativeEvent.locationX - this.startX;
-    if (distance > this.layout.width / 3) {
+    if (distance > this.layout.width / 3 && this.props.onSwipedRight) {
       Animated.timing(this.state.x, {
         toValue: this.layout.width,
         duration: 250,
@@ -73,7 +79,7 @@ export default class Swipeable extends React.Component<
           this.props.onSwipedRight,
         );
       });
-    } else if (distance < -this.layout.width / 3) {
+    } else if (distance < -this.layout.width / 3 && this.props.onSwipedLeft) {
       Animated.timing(this.state.x, {
         toValue: -this.layout.width,
         duration: 250,
@@ -103,7 +109,7 @@ export default class Swipeable extends React.Component<
     const {x, direction} = this.state;
     let backgroundColor =
       direction === 'NONE'
-        ? 'white'
+        ? '#EFEFEF'
         : direction === 'RIGHT'
         ? '#98FB98'
         : '#FFC0CB';
