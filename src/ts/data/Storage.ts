@@ -15,12 +15,14 @@ export default class Storage {
   }
 
   removeStack(id: string): Promise<ILabel[]> {
-    return this.fetchStacks().then(stacks => {
-      const newStacks = stacks.filter(stack => stack.id !== id);
-      return AsyncStorage.setItem('stacks', JSON.stringify(newStacks)).then(
-        () => newStacks,
-      );
-    });
+    return AsyncStorage.removeItem(`stack_${id}`).then(() =>
+      this.fetchStacks().then(stacks => {
+        const newStacks = stacks.filter(stack => stack.id !== id);
+        return AsyncStorage.setItem('stacks', JSON.stringify(newStacks)).then(
+          () => newStacks,
+        );
+      }),
+    );
   }
 
   fetchStacks(): Promise<ILabel[]> {

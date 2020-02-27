@@ -14,6 +14,7 @@ interface ISearchProps {
   style?: StyleProp<ViewStyle>;
   inputStyle?: StyleProp<ViewStyle>;
   onSelected: (entry: string) => Promise<void>;
+  instantPick?: boolean;
 }
 
 interface ISearchState {
@@ -36,7 +37,7 @@ export default class Search extends React.Component<
   }
 
   render(): ReactNode {
-    const {children, style, inputStyle} = this.props;
+    const {onSelected, children, style, instantPick, inputStyle} = this.props;
     const {query, closed} = this.state;
     const data = this.filterData(query);
     return (
@@ -50,8 +51,7 @@ export default class Search extends React.Component<
           onSubmitEditing={() => {
             const item = query.trim();
             if (item) {
-              this.props
-                .onSelected(item)
+              onSelected(item)
                 .then(() => {
                   this.setState({query: '', closed: true});
                 })
@@ -69,7 +69,20 @@ export default class Search extends React.Component<
               {data.map((entry, index) => (
                 <TouchableHighlight
                   key={'autocomplete-' + index}
-                  onPress={() => this.setState({query: entry, closed: true})}>
+                  onPress={() => {
+                    if (instantPick) {
+                      onSelected(entry)
+                        .then(() => {
+                          this.input?.blur();
+                          this.setState({query: '', closed: true});
+                        })
+                        .catch(() => {
+                          this.input?.focus();
+                        });
+                    } else {
+                      this.setState({query: entry, closed: true});
+                    }
+                  }}>
                   <Text style={styles.item}>{entry}</Text>
                 </TouchableHighlight>
               ))}

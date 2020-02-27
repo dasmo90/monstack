@@ -1,5 +1,6 @@
 import React, {ReactNode} from 'react';
 import {
+  FlatList,
   LayoutAnimation,
   ScrollView,
   StyleSheet,
@@ -22,6 +23,8 @@ interface IStackProps {
 interface IStackState {
   list: {label: string; id: number}[];
   suggestions: string[];
+  loading: boolean;
+  increased: boolean;
 }
 
 export default class Stack extends React.Component<IStackProps, IStackState> {
@@ -30,6 +33,8 @@ export default class Stack extends React.Component<IStackProps, IStackState> {
     this.state = {
       list: [],
       suggestions: [],
+      loading: true,
+      increased: false,
     };
   }
 
@@ -42,7 +47,7 @@ export default class Stack extends React.Component<IStackProps, IStackState> {
       this.setState({suggestions: JSON.parse(value || '[]')});
     });
     AsyncStorage.getItem(this.stackListKey).then(value => {
-      this.setState({list: JSON.parse(value || '[]')});
+      this.setState({list: JSON.parse(value || '[]'), loading: false});
     });
   }
 
@@ -120,18 +125,19 @@ export default class Stack extends React.Component<IStackProps, IStackState> {
   }
 
   render(): ReactNode {
-    const {list, suggestions} = this.state;
+    const {list, increased, loading, suggestions} = this.state;
     const all = ALL.concat(suggestions);
     return (
       <View style={styles.main}>
         <Search
           style={styles.body}
           inputStyle={styles.input}
+          instantPick={true}
           data={all}
           onSelected={item => {
             if (all.indexOf(item) >= 0) {
               return this.addElement(item).then(stackList =>
-                this.setState({list: stackList}),
+                this.setState({list: stackList, increased: true}),
               );
             } else {
               return this.showDialog(
@@ -141,6 +147,7 @@ export default class Stack extends React.Component<IStackProps, IStackState> {
                     return this.addElement(item).then(stackList =>
                       this.setState({
                         list: stackList,
+                        increased: true,
                         suggestions: suggestionList,
                       }),
                     );
@@ -149,45 +156,47 @@ export default class Stack extends React.Component<IStackProps, IStackState> {
               );
             }
           }}>
-          <View style={styles.inputSeparator} />
-          <ScrollView
-            bounces={false}
-            contentInsetAdjustmentBehavior="automatic"
-            style={styles.list}>
-            {list.length === 0 ? (
+          <View style={styles.list}>
+            {loading ? (
+              <Text style={styles.empty}>Loading ...</Text>
+            ) : list.length === 0 ? (
               <Text style={styles.empty}>Your stack is empty.</Text>
             ) : (
-              list.map((entry, index) => {
-                const view = (
-                  <Swipeable
-                    key={entry.id}
-                    onSwipedLeft={() => {
-                      this.addElement(entry.label).then(stackList =>
-                        this.setState({list: stackList}),
-                      );
-                    }}
-                    onSwipedRight={() => {
-                      this.removeElement(index).then(stackList => {
-                        LayoutAnimation.configureNext(
-                          LayoutAnimation.Presets.easeInEaseOut,
+              <FlatList
+                data={list}
+                initialNumToRender={20}
+                renderItem={({item, index}) => {
+                  const view = (
+                    <Swipeable
+                      key={item.id}
+                      onSwipedLeft={() => {
+                        this.addElement(item.label).then(stackList =>
+                          this.setState({list: stackList, increased: true}),
                         );
-                        this.setState({list: stackList});
-                      });
-                    }}>
-                    <View style={styles.item}>
-                      <Text>{entry.label}</Text>
-                    </View>
-                    <View style={styles.itemSeparator} />
-                  </Swipeable>
-                );
-                return index === 0 ? (
-                  <Fadeable key={entry.id}>{view}</Fadeable>
-                ) : (
-                  view
-                );
-              })
+                      }}
+                      onSwipedRight={() => {
+                        this.removeElement(index).then(stackList => {
+                          LayoutAnimation.configureNext(
+                            LayoutAnimation.Presets.easeInEaseOut,
+                          );
+                          this.setState({list: stackList, increased: false});
+                        });
+                      }}>
+                      <View style={styles.item}>
+                        <Text>{(index + 1)}. {item.label}</Text>
+                      </View>
+                      <View style={styles.itemSeparator} />
+                    </Swipeable>
+                  );
+                  return index === 0 && increased ? (
+                    <Fadeable key={item.id}>{view}</Fadeable>
+                  ) : (
+                    view
+                  );
+                }}
+              />
             )}
-          </ScrollView>
+          </View>
           <View style={styles.footer}>
             <Text
               onPress={() => {
@@ -196,7 +205,7 @@ export default class Stack extends React.Component<IStackProps, IStackState> {
                   () => {},
                 )
                   .then(() => this.clear())
-                  .then(() => this.setState({list: []}))
+                  .then(() => this.setState({list: [], increased: false}))
                   .catch(() => {});
               }}>
               Clear stack
@@ -224,15 +233,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     backgroundColor: 'white',
   },
-  inputSeparator: {
-    height: 5,
-    backgroundColor: '#efefef',
-  },
   list: {
-    marginTop: 20,
-    flexGrow: 1,
+    marginTop: 5,
+    flex: 1,
   },
   footer: {
+    flexBasis: 15,
     marginVertical: 15,
     display: 'flex',
     alignItems: 'center',

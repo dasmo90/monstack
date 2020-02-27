@@ -58,13 +58,17 @@ export default class Main extends React.Component<IMainProps, IMainState> {
     this.unsubscribe();
   }
 
-  private showDialog(): void {
+  private showAddDialog(): void {
     let stackName: string = '';
     showDialog({
       reactContent: (
         <View>
           <Text>Enter your stack name:</Text>
-          <TextInput onChangeText={text => (stackName = text)} />
+          <TextInput
+            style={styles.addInput}
+            onChangeText={text => (stackName = text)}
+          />
+          <View style={styles.addBottomBorder} />
         </View>
       ),
       options: [
@@ -87,24 +91,68 @@ export default class Main extends React.Component<IMainProps, IMainState> {
     });
   }
 
+  private showRemoveDialog(label: ILabel): void {
+    showDialog({
+      content: `Do you really want to delete your ${label.label}'s stack?`,
+      options: [
+        {
+          text: 'No',
+          action: () => {
+            hideDialog();
+          },
+        },
+        {
+          text: 'Yes',
+          action: () => {
+            this.storage
+              .removeStack(label.id)
+              .then(this.updateState)
+              .then(() => hideDialog());
+          },
+        },
+      ],
+    });
+  }
+
   render(): ReactNode {
     const {navigation} = this.props;
     const {itemSize, stacks} = this.state;
     return (
       <View style={styles.fullHeight}>
-        {stacks.map(stack => (
-          <View key={stack.id} style={[styles.item, {height: itemSize}]}>
-            <TouchableOpacity
-              style={[styles.button, styles.stack]}
-              onPress={() => navigation.navigate('Stack', stack)}
-              onLongPress={() =>
-                this.storage.removeStack(stack.id).then(this.updateState)
-              }>
-              <Text style={styles.stackName}>{stack.label}</Text>
-              <Text style={styles.stackCount}>({stack.count})</Text>
-            </TouchableOpacity>
-          </View>
-        ))}
+        {stacks.map(stack => {
+          const percentage = stack.count / 100;
+          const colorDesc = 255 * (1 - Math.pow(percentage, 7));
+          const colorAsc = percentage > 0.8 ? 255 : 128;
+          return (
+            <View key={stack.id} style={[styles.item, {height: itemSize}]}>
+              <TouchableOpacity
+                style={[
+                  styles.button,
+                  styles.stack,
+                  {
+                    backgroundColor: `rgb(255, ${colorDesc}, ${colorDesc})`,
+                  },
+                ]}
+                onPress={() => navigation.navigate('Stack', stack)}
+                onLongPress={() => this.showRemoveDialog(stack)}>
+                <Text
+                  style={[
+                    styles.stackName,
+                    {color: `rgb(${colorAsc}, ${colorAsc}, ${colorAsc})`},
+                  ]}>
+                  {stack.label}
+                </Text>
+                <Text
+                  style={[
+                    styles.stackCount,
+                    {color: `rgb(${colorAsc}, ${colorAsc}, ${colorAsc})`},
+                  ]}>
+                  ({stack.count})
+                </Text>
+              </TouchableOpacity>
+            </View>
+          );
+        })}
         <View
           style={[styles.item, {height: itemSize}]}
           onLayout={event => {
@@ -114,7 +162,7 @@ export default class Main extends React.Component<IMainProps, IMainState> {
           }}>
           <TouchableOpacity
             style={styles.button}
-            onPress={() => this.showDialog()}>
+            onPress={() => this.showAddDialog()}>
             <View
               style={[
                 styles.cross,
@@ -161,17 +209,23 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
+  addInput: {
+    marginTop: 5,
+    paddingVertical: 3,
+  },
+  addBottomBorder: {
+    height: 1,
+    backgroundColor: 'black',
+  },
   stack: {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
   },
   stackName: {
-    color: 'gray',
     fontSize: 24,
   },
   stackCount: {
-    color: 'gray',
     fontSize: 16,
   },
   cross: {
